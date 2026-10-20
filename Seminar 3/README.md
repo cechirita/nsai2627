@@ -34,15 +34,15 @@ b. În ce logică sunt scrise următoarele formule? Putem găsi formule echivale
 
 a. Cum transformăm formule LTL în automate Büchi?
 
-	- [Automate Büchi, LTL](https://spot.lre.epita.fr/concepts.html)
+- [Automate Büchi, LTL](https://spot.lre.epita.fr/concepts.html)
 
-	- [Algoritmi de transformare](https://en.wikipedia.org/wiki/Linear_temporal_logic_to_B%C3%BCchi_automaton)
+- [Algoritmi de transformare](https://en.wikipedia.org/wiki/Linear_temporal_logic_to_B%C3%BCchi_automaton)
 
 b. Dați 3 exemple de propoziții în LTL și obțineți automatele Büchi corespunzătoare folosind cod într-un limbaj la alegere. Inspo: 
 
-	- [SPOT - C++ library for LTL2TGBA translations](https://spot.lre.epita.fr/index.html)
+- [SPOT - C++ library for LTL2TGBA translations](https://spot.lre.epita.fr/index.html)
 
-	- [Fast LTL to BA translator via alternating automata](https://lsv.ens-paris-saclay.fr/~gastin/ltl2ba/)
+- [Fast LTL to BA translator via alternating automata](https://lsv.ens-paris-saclay.fr/~gastin/ltl2ba/)
 
 
 ## 3. Model checking: [SPIN](https://en.wikipedia.org/wiki/SPIN_model_checker) vs [NuSMV](https://nusmv.fbk.eu/overview.html)
