@@ -15,6 +15,8 @@ Classical Planning" in *Artificial Intelligence: A Modern Approach ed. 3*
 
 - [programare logică multivaluată](https://www.researchgate.net/profile/Thomas-Lukasiewicz/publication/2304612_Probabilistic_and_Truth-Functional_Many-Valued_Logic_Programming/links/02e7e51e94f61de191000000/Probabilistic-and-Truth-Functional-Many-Valued-Logic-Programming.pdf)
 
+- [programare logică abductivă](https://en.wikipedia.org/wiki/Abductive_logic_programming)
+
 - [programare logică inductivă](https://en.wikipedia.org/wiki/Inductive_logic_programming): [at 30!](https://jair.org/index.php/jair/article/view/13507/26814)
 
 
