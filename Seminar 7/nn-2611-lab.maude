@@ -1,0 +1,398 @@
+*** Floating-point numbers  - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod FLOAT-LIST is
+  protecting LIST{Float} * (
+    sort NeList{Float} to NeFloatList,
+    sort List{Float} to FloatList ) .
+endfm
+
+fmod FLOPS is
+  protecting FLOAT-LIST .
+
+  vars F F1 F2 S : Float .
+  vars FL FL1 FL2 : FloatList .
+
+  *** pointwise addition of lists of floats
+  op _[+]_ : FloatList FloatList -> FloatList [comm] .
+  eq nil [+] FL = FL .
+  eq F1 FL1 [+] F2 FL2 = (F1 + F2) (FL1 [+] FL2) .
+
+  *** pointwise subtraction of lists of floats
+  op _[-]_ : FloatList FloatList -> FloatList .
+  eq FL [-] nil = FL .
+  eq nil [-] F FL = (- F) (nil [-] FL) .
+  eq F1 FL1 [-] F2 FL2 = (F1 + (- F2)) (FL1 [-] FL2) .
+
+  *** pointwise multiplication of lists of floats
+  op _[*]_ : FloatList FloatList -> FloatList [comm] .
+  eq nil [*] FL = FL .
+  eq F1 FL1 [*] F2 FL2 = (F1 * F2) (FL1 [*] FL2) .
+
+  *** dot product
+  op _[.]_ : FloatList FloatList -> Float [comm] .
+  *** eq nil [.] FL = ...
+  *** eq F1 FL1 [.] F2 FL2 = ...
+
+  *** pointwise multiplication of a list with a given scalar
+  op scale : Float FloatList -> FloatList .
+  eq scale(S, nil) = nil .
+  eq scale(S, F FL) = (S * F) scale(S, FL) .
+
+  *** first element of a list; defaults to .0 when the list is empty
+  op head0 : FloatList -> Float .
+  eq head0(nil) = .0 .
+  eq head0(F FL) = F .
+
+  *** tail of a list
+  op tail : FloatList -> FloatList [ditto] .
+  eq tail(nil) = nil .
+endfm
+
+*** Activation functions  - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod ACTIVATION-FUNCTION is
+  protecting FLOAT .
+
+  var X : Float .
+
+  sort ActivationFunction .
+  *** function application to a given float
+  op __ : ActivationFunction Float -> Float .
+
+  op linear : -> ActivationFunction [ctor] .
+  eq linear X = X .
+
+  op sigmoid : -> ActivationFunction [ctor] .
+  eq sigmoid X = 1.0 / (1.0 + exp(- X)) .
+
+  op ReLU : -> ActivationFunction [ctor] .
+  *** eq ReLU X = ...
+
+  sort Derivative .
+  op _' : ActivationFunction -> Derivative .
+
+  *** derivative application to a given float
+  op __ : Derivative Float ~> Float .
+  eq (linear)' X = 1.0 .
+  *** eq (sigmoid)' X = ...
+  ceq (ReLU)' X = 0.0 if X < 0.0 .
+  ceq (ReLU)' X = 1.0 if X > 0.0 .
+endfm
+
+*** Vectors  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+fmod VECTOR is
+  protecting FLOPS .
+  protecting ACTIVATION-FUNCTION .
+
+  sort Vector .
+  op Vector[_] : FloatList -> Vector [ctor] .
+
+  var  F : Float .
+  vars FL FL1 FL2 : FloatList .
+  var  phi : ActivationFunction .
+  var  phi' : Derivative .
+
+  op floats : Vector -> FloatList .
+  eq floats(Vector[FL]) = FL .
+
+  op size : Vector -> Nat .
+  eq size(Vector[FL]) = size(FL) .
+
+  op _+_ : Vector Vector -> Vector .
+  *** eq Vector[FL1] + Vector[FL2] = ...
+
+  op _-_ : Vector Vector -> Vector .
+  *** eq Vector[FL1] - Vector[FL2] = ...
+
+  *** Hadamard product (pointwise)
+  op _(*)_ : Vector Vector -> Vector .
+  eq Vector[FL1] (*) Vector[FL2] = Vector[FL1 [*] FL2] .
+
+  *** scalar multiplication
+  op __ : Float Vector -> Vector .
+  *** eq F Vector[FL] = ...
+
+  *** pointwise application of activation functions
+  op __ : ActivationFunction Vector -> Vector .
+  *** eq phi Vector[nil] = ...
+  *** eq phi Vector[F FL] = ...
+
+  *** pointwise application of activation functions
+  op __ : Derivative Vector -> Vector .
+  *** eq phi' Vector[nil] = ...
+  *** eq phi' Vector[F FL] = ...
+endfm
+
+*** Matrices  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod ROW is
+  protecting VECTOR .
+
+  sort Row .
+  op Row[_] : FloatList -> Row [ctor] .
+
+  var  F : Float .
+  vars FL FL1 FL2 : FloatList .
+
+  op floats : Row -> FloatList .
+  eq floats(Row[FL]) = FL .
+
+  op nil : Row -> Bool .
+  eq nil(Row[FL]) = FL == nil .
+
+  op head : Row -> Float .
+  eq head(Row[FL]) = head0(FL) .
+
+  op tail : Row -> Row .
+  eq tail(Row[FL]) = Row[tail(FL)] .
+
+  op _._ : Row Vector -> Float [prec 31] .
+  eq Row[FL1] . Vector[FL2] = FL1 [.] FL2 .
+
+  op _-_ : Row Row -> Row .
+  eq Row[FL1] - Row[FL2] = Row[FL1 [-] FL2] .
+
+  op __ : Float Row -> Row .
+  eq F Row[FL] = Row[scale(F, FL)] .
+endfm
+
+view Row from TRIV to ROW is
+  sort Elt to Row .
+endv
+
+*** - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod MATRIX is
+  protecting (LIST * (op head : NeList{X} -> X$Elt to rlhead, op tail : NeList{X} -> List{X} to rltail)) {Row} * (
+    sort NeList{Row} to NeRowList,
+    sort List{Row} to RowList ) .
+  protecting EXT-BOOL .
+
+  sort Matrix .
+  op Matrix[_] : RowList -> Matrix [ctor] .
+
+  var  F : Float .
+  vars FL FL1 FL2 : FloatList .
+  vars R R1 R2 : Row .
+  var  NRL : NeRowList .
+  vars RL RL1 RL2 : RowList .
+  var  V : Vector .
+
+  op rows : Matrix -> RowList .
+  eq rows(Matrix[RL]) = RL .
+
+  op #rows : Matrix -> Nat .
+  eq #rows(Matrix[RL]) = size(RL) .
+
+  op #cols : Matrix -> Nat .
+  eq #cols(Matrix[nil]) = 0 .
+  *** eq #cols(Matrix[R RL]) = ...
+
+  op nils : RowList -> Bool .
+  eq nils(nil) = true .
+  eq nils(R RL) = nil(R) and-then nils(RL) .
+
+  op heads : RowList -> FloatList .
+  eq heads(nil) = nil .
+  eq heads(R RL) = head(R) heads(RL) .
+
+  op tails : RowList -> RowList .
+  eq tails(nil) = nil .
+  eq tails(R RL) = tail(R) tails(RL) .
+
+  op __ : Matrix Vector -> Vector [prec 31] .
+  *** eq Matrix[nil] V = ...
+  *** eq Matrix[R RL] V = ...
+
+  op transpose : Matrix -> Matrix .
+  eq transpose(Matrix[RL]) = Matrix[transpose(RL)] .
+
+  op transpose : RowList -> RowList .
+  ceq transpose(RL) = nil if nils(RL) .
+  eq transpose(RL) = Row[heads(RL)] transpose(tails(RL)) [owise] .
+
+  op _$_ : Vector Vector -> Matrix .
+  eq Vector[FL1] $ Vector[FL2] = Matrix[FL1 [$] Row[FL2]] .
+
+  op _[$]_ : FloatList Row -> RowList .
+  eq nil [$] R = nil .
+  eq (F FL) [$] R = (F R) (FL [$] R) .
+
+  op __ : Float Matrix -> Matrix .
+  eq F Matrix[RL] = Matrix[F RL] .
+
+  op __ : Float RowList -> RowList .
+  eq F (nil).RowList = nil .
+  eq F (R RL) = (F R) (F RL) .
+
+  op _-_ : Matrix Matrix -> Matrix .
+  eq Matrix[RL1] - Matrix[RL2] = Matrix[RL1 [-] RL2] .
+
+  op _[-]_ : RowList RowList -> RowList .
+  eq RL [-] nil = RL .
+  eq nil [-] (R2 RL2) = ((- 1.0) R2) (nil [-] RL2) .
+  eq (R1 RL1) [-] (R2 RL2) = (R1 - R2) (RL1 [-] RL2) .
+endfm
+
+*** Networks  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod LAYER is
+  protecting MATRIX .
+
+  sort Layer .
+  op Layer[_,_,_] : ActivationFunction Matrix Vector -> Layer [ctor] .
+
+  var phi : ActivationFunction .
+  var W : Matrix .
+  var B : Vector .
+
+  op activation : Layer -> ActivationFunction .
+  eq activation(Layer[phi, W, B]) = phi .
+
+  op weights : Layer -> Matrix .
+  eq weights(Layer[phi, W, B]) = W .
+
+  op biases : Layer -> Vector .
+  eq biases(Layer[phi, W, B]) = B .
+
+  op width : Layer -> Nat .
+  eq width(Layer[phi, W, B]) = max(#rows(W), size(B)) .
+endfm
+
+view Layer from TRIV to LAYER is
+  sort Elt to Layer .
+endv
+
+fmod LAYER-LIST is
+  protecting LIST{Layer} * (
+    sort NeList{Layer} to NeLayerList,
+    sort List{Layer} to LayerList ) .
+  protecting NAT-LIST .
+
+  var L : Layer .
+  var LL : LayerList .
+
+  op layer-widths : LayerList -> NatList .
+  eq layer-widths(nil) = nil .
+  eq layer-widths(L LL) = width(L) layer-widths(LL) .
+endfm
+
+*** - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod NETWORK is
+  protecting LAYER-LIST .
+
+  sort Network .
+  op Network[_] : LayerList -> Network .
+
+  var  phi : ActivationFunction .
+  var  L : Layer .
+  var  LL : LayerList .
+  var  W : Matrix .
+  vars I B : Vector .
+
+  op layer-widths : Network -> NatList .
+  eq layer-widths(Network[nil]) = nil .
+  eq layer-widths(Network[L LL]) = #cols(weights(L)) layer-widths(L LL) .
+
+  op output : Network Vector -> Vector .
+  *** eq output(Network[nil], I) = ...
+  *** eq output(Network[Layer[phi, W, B] LL], I) = ...
+endfm
+
+*** Training  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+view Vector from TRIV to VECTOR is
+  sort Elt to Vector .
+endv
+
+fmod VECTOR-LIST is
+  protecting (LIST * (op size : List{X} -> Nat to vlsize)) { Vector } * (
+    sort NeList{Vector} to NeVectorList,
+    sort List{Vector} to VectorList ) .
+endfm
+
+*** - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod TRAINING is
+  protecting NETWORK .
+  protecting VECTOR-LIST .
+
+  var  phi : ActivationFunction .
+  var  L : Layer .
+  var  LL : LayerList .
+  vars W M : Matrix .
+  vars V I O T D B : Vector .
+  vars VL DL FF : VectorList .
+  var  N : Network .
+
+  op cost-gradient : Vector Vector -> Vector .
+  eq cost-gradient(O, T) = O - T .
+
+  op learning-rate : -> Float .
+  eq learning-rate = .5 .
+
+  op feedforward : Network Vector -> VectorList .
+  *** eq feedforward(Network[nil], I) = ...
+  *** eq feedforward(Network[Layer[phi, W, B] LL], I) = ...
+
+  op errors : Network VectorList Vector ~> VectorList .
+  eq errors(Network[LL Layer[phi, W, B]], VL I O, T)
+   = backprop(Network[LL], VL, W, cost-gradient(O, T) (*) ((phi)' (W I + B))) .
+
+  op backprop : Network VectorList Matrix Vector ~> VectorList .
+  *** eq backprop(Network[nil], VL, M, D) = ...
+  *** eq backprop(Network[LL], nil, M, D) = ...
+  eq backprop(Network[LL Layer[phi, W, B]], VL I, M, D)
+   = backprop(Network[LL], VL, W, (transpose(M) D) (*) ((phi)' (W I + B))) D .
+
+  op train : Network Vector Vector -> Network .
+  ceq train(Network[LL], I, O)
+   = Network[layer-train(LL, FF, errors(Network[LL], FF, O))]
+   if FF := feedforward(Network[LL], I) .
+
+  op layer-train : LayerList VectorList VectorList -> LayerList .
+  eq layer-train(nil, VL, DL) = nil .
+  eq layer-train(LL Layer[phi, W, B], VL I O, DL D)
+   = layer-train(LL, VL I, DL)
+     Layer[phi, W - learning-rate (D $ I), B - learning-rate D] .
+endfm
+
+*** A concrete application  - - - - - - - - - - - - - - - - - - - - - - - - - --
+
+fmod COLOR-FILTER is
+  protecting TRAINING .
+
+  op teal : -> Network .
+  eq teal = Network[
+      Layer[ReLU,
+        Matrix[Row[-1. 1. .0]   *** more green than red
+               Row[-1. .0 1.]   *** more blue  than red
+               Row[.0 1. -1.]   *** similar levels of blue and green, part 1
+               Row[.0 -1. 1.]   *** similar levels of blue and green, part 2
+               Row[-1. .0 .0]], *** a low level of red
+        Vector[.0 .0 .0 .0 .5]]
+      Layer[sigmoid,
+        Matrix[Row[1. 1. -1. -1. 1.]],
+        Vector[.0]]] .
+
+  op rand : -> Network .
+  eq rand = Network[
+      Layer[ReLU,
+        Matrix[Row[-.4 .8 .3]
+               Row[-.5 -.5 .1]
+               Row[.6 .7 .5]
+               Row[.1 -.7 .9]
+               Row[.3 -.9 .4]],
+        Vector[-.2 -.7 .0 .6 -.8]]
+      Layer[sigmoid,
+        Matrix[Row[-.2 -.4 .6 -.2 .0]],
+        Vector[.4]]] .
+endfm
+
+red output(teal, Vector[.0 .5 .5]) . *** teal
+red output(teal, Vector[1. .5 .0]) . *** orange
+red output(teal, Vector[1. .0 1.]) . *** magenta
+
+red train(rand, Vector[.0 .5 .5], output(teal, Vector[.0 .5 .5])) .
